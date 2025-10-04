@@ -118,3 +118,15 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer base {
+  button,
+  a,
+  input[type='button'],
+  input[type='submit'],
+  input[type='reset'],
+  select,
+  label[for] {
+    @apply cursor-pointer;
+  }
+}

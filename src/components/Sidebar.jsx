@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+
 import { usePathname } from 'next/navigation';
 import {
   Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem,
@@ -66,17 +67,19 @@ export default function MainAppLayout({ children }) {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <Sidebar>
-          <SidebarHeader className="border-b border-sidebar-border">
-            <div className="flex items-center gap-2 px-4 py-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-white" />
+          <Link href={"/"}>
+            <SidebarHeader className="border-b border-sidebar-border">
+              <div className="flex items-center gap-2 px-4 py-4">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">PortfolioInsight</h2>
+                  <p className="text-xs text-muted-foreground">India</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-semibold">PortfolioInsight</h2>
-                <p className="text-xs text-muted-foreground">India</p>
-              </div>
-            </div>
-          </SidebarHeader>
+            </SidebarHeader>
+          </Link>
 
           <SidebarContent>
             <SidebarMenu>
