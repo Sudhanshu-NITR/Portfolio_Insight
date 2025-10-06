@@ -140,7 +140,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Contact Section */}
+        {/* Contact Section
         <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex items-center gap-3">
@@ -175,7 +175,7 @@ export default function Footer() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Bottom Section */}
         <div className="border-t border-gray-200 dark:border-gray-800 pt-8">

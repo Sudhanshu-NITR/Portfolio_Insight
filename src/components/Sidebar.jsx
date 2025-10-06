@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 
-import { usePathname } from 'next/navigation';
 import {
   Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem,
   SidebarMenuButton, SidebarProvider, SidebarTrigger
@@ -15,8 +15,11 @@ import {
   BarChart3, TrendingUp, Wallet, MessageSquare, Home, Plus, Bell, LogOut
 } from 'lucide-react';
 
-export default function MainAppLayout({ children }) {
+import AddHoldingModal from '@/components/AddHoldingModal';
+
+export default function MainAppLayout({ children, selectedPortfolioId = null }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [darkMode, setDarkMode] = useState(() => {
     try {
@@ -27,7 +30,6 @@ export default function MainAppLayout({ children }) {
   });
   const [showAddHolding, setShowAddHolding] = useState(false);
 
-  // Apply dark mode and persist
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -49,7 +51,6 @@ export default function MainAppLayout({ children }) {
     { id: 'ai-insights', label: 'AI Insights', icon: MessageSquare, href: '/ai-insights' },
   ];
 
-  // Simple loading state to prevent layout flicker while session resolves
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -58,7 +59,6 @@ export default function MainAppLayout({ children }) {
     );
   }
 
-  // Helper for avatar fallback initial
   const avatarInitial = session?.user?.name?.[0] ??
                         session?.user?.email?.[0] ??
                         '?';
@@ -145,6 +145,20 @@ export default function MainAppLayout({ children }) {
             {children}
           </div>
         </main>
+
+        {/* Add Holding Modal */}
+        <AddHoldingModal
+          show={showAddHolding}
+          onClose={() => setShowAddHolding(false)}
+          onAdded={() => {
+            // Refresh page data after a holding is added. Adjust if you use SWR/React Query instead.
+            try {
+              router.refresh();
+            } catch {
+              // fallback: close modal only (modal already closes in AddHoldingModal after success)
+            }
+          }}
+        />
       </div>
     </SidebarProvider>
   );

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Link from "next/link";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -95,15 +96,17 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="w-full max-w-md">
-        <div className="flex items-center justify-center mb-8">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center mr-3">
-            <TrendingUp className="w-7 h-7 text-white" />
+        <Link href={"/"}>
+          <div className="flex items-center justify-center mb-8">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center mr-3">
+              <TrendingUp className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">PortfolioInsight</h1>
+              <p className="text-sm text-muted-foreground">India</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">PortfolioInsight</h1>
-            <p className="text-sm text-muted-foreground">India</p>
-          </div>
-        </div>
+        </Link>
 
         <Card>
           <CardHeader>

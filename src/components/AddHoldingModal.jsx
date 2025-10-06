@@ -3,12 +3,14 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
+import axios from "axios";
 
 export default function AddHoldingModal({
   show,
   onClose,
   onAdded,
-  selectedPortfolioId,
+  // selectedPortfolioId,
 }) {
   const {
     register,
@@ -19,36 +21,39 @@ export default function AddHoldingModal({
     defaultValues: {
       ticker: "",
       shares: "",
+      exchange: "",
       purchase_price: "",
       purchase_date: "",
       sector: "",
     },
   });
+  const { data: session, status } = useSession();
 
   const onSubmit = async (data) => {
-    if (!selectedPortfolioId) {
-      alert("Please select a portfolio first.");
-      return;
-    }
-
     const payload = {
       ticker: data.ticker.trim(),
       shares: Number(data.shares),
+      exchange: data.exchange.trim(),
       purchase_price: Number(data.purchase_price),
       purchase_date: data.purchase_date || null,
       sector: data.sector || null,
     };
 
     try {
-      const res = await fetch(`/api/portfolios/${selectedPortfolioId}/holdings`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        credentials: "include",
-      });
-
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Failed to add holding");
+      const user_id = session.user?._id;
+      
+      if(!user_id){
+        alert(err.message || "Error fetching user id");
+      }
+      
+      const res = await axios.post(
+        `/api/add-holding/`,
+        payload,
+        {
+          withCredentials: true
+        }
+      );
+      // console.log(res);
 
       reset();
       onAdded?.();
@@ -83,6 +88,42 @@ export default function AddHoldingModal({
             />
             {errors.ticker && (
               <p className="text-sm text-red-600">{errors.ticker.message}</p>
+            )}
+          </div>
+            
+          {/* <div>
+            <label className="block text-sm font-medium mb-1">Exchange</label>
+            <option
+              {...register("exchange", { required: "Exchange is required" })}
+              className="w-full p-2 border rounded-lg bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Select a Stock Exchange"
+            />
+            {errors.ticker && (
+              <p className="text-sm text-red-600">{errors.ticker.message}</p>
+            )}
+          </div> */}
+          <div>
+            <label htmlFor="exchange-select" className="block text-sm font-medium mb-1">
+              Exchange
+            </label>
+            
+            <select
+              id="exchange-select"
+              {...register("exchange", { required: "Please select an exchange" })}
+              className="w-full p-2 border rounded-lg bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              defaultValue="NSE" 
+            >
+              <option value="" disabled>
+                Select a Stock Exchange
+              </option>
+              
+              <option value="NSE">NSE (National Stock Exchange)</option>
+              <option value="BSE">BSE (Bombay Stock Exchange)</option>
+            </select> 
+
+            {/* Display an error if the field is not selected */}
+            {errors.exchange && (
+              <p className="text-sm text-red-600 mt-1">{errors.exchange.message}</p>
             )}
           </div>
 

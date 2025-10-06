@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -12,6 +12,7 @@ import {
   Activity
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
+import axios from 'axios';
 
 const portfolioData = {
   totalValue: 1250000,
@@ -66,6 +67,37 @@ export default function Dashboard() {
   const formatPercent = (percent) => {
     return `${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%`;
   };
+
+  // useEffect(() => {
+  //   // 1. Define an async function inside the effect
+  //   const fetchData = async () => {
+  //     try {
+  //       // const res = await fetch('/api/dashboard-data'); // 'GET' is the default method
+  //       const res = await axios.get(
+  //         '/api/dashboard-data',
+  //         {
+  //           withCredentials: true
+  //         }
+  //       );
+
+  //       // 2. Check if the response was successful
+  //       // if (!res.ok) {
+  //       //   throw new Error(`HTTP error! Status: ${res.status}`);
+  //       // }
+
+  //       // 3. You need to parse the response body to see the data
+  //       // const data = await res.json();
+  //       console.log("Data from API:", res);
+
+  //     } catch (e) {
+  //       console.error("Failed to fetch dashboard data:", e);
+  //     }
+  //   };
+
+  //   // 4. Call the async function
+  //   fetchData();
+
+  // }, []);
 
   return (
     <div className="space-y-6">
