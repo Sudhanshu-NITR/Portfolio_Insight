@@ -65,16 +65,16 @@ export async function POST(req) {
         portfolio.holdings.push(holding);
         await portfolio.save();
         
-        let priceMap = {};
-        try {
-            priceMap = await Portfolio.enrichWithMarketPrices(portfolio);
-        } catch (err) {
-            console.warn("price enrichment failed:", err.message || err);
-        }
-        const summary = portfolio.computePortfolioSummary(priceMap);
+        // let priceMap = {};
+        // try {
+        //     priceMap = await Portfolio.enrichWithMarketPrices(portfolio);
+        // } catch (err) {
+        //     console.warn("price enrichment failed:", err.message || err);
+        // }
+        // const summary = portfolio.computePortfolioSummary(priceMap);
         
         // const updated = await Portfolio.findById(id).lean().exec();
-        return NextResponse.json({ ok: true, portfolio: portfolio.toObject(), summary }, { status: 201 });
+        return NextResponse.json({ ok: true, message: "Holding added successfully" }, { status: 201 });
     } catch (err) {
         console.error("Error adding a holding, err: ", err);
         return NextResponse.json({ error: err.message || "Server error" }, { status: 500 });

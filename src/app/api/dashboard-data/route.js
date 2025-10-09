@@ -3,6 +3,10 @@ import dbConnect from '@/lib/dbConnect';
 import Portfolio from '@/model/Portfolio.model';
 import { getToken } from 'next-auth/jwt';
 
+
+// ========================================================================================== //
+
+
 const secret = process.env.NEXTAUTH_SECRET;
 
 const computeHoldingValues = function (priceMap = {}, portfolio) {
@@ -27,6 +31,7 @@ const computeHoldingValues = function (priceMap = {}, portfolio) {
             purchase_price: h.purchase_price,
             purchase_date: h.purchase_date || null,
             sector: h.sector || null,
+            exchange: h.exchange || null,
             marketPrice,
             invested,
             value,
@@ -72,7 +77,7 @@ const computePortfolioSummary = function (priceMap = {}, portfolio) {
     let todayGain = 0;
     let todayGainPct = 0;
     if (isMarketOpenToday()) {
-        
+
     }
 
     return {
@@ -86,6 +91,179 @@ const computePortfolioSummary = function (priceMap = {}, portfolio) {
         sectors
     };
 };
+
+
+// Helpers (place near your other helper functions)
+const normalizeTickerKey = (tk) => {
+    if (!tk) return tk;
+    return String(tk).toUpperCase().replace(/\.NSE|\.NS|\.BSE/gi, "");
+};
+
+const pickMonths = (priceMap, monthsCount = 6) => {
+    // Prefer using ^NSEI months if present; otherwise pick any instrument with monthly_ohlc.
+    const idx = priceMap['^NSEI'] || priceMap['^NSEI.NS'] || priceMap['NSEI'] || null;
+    let source = idx;
+    if (!source) {
+        // find first item with monthly_ohlc array
+        for (const k of Object.keys(priceMap)) {
+            if (priceMap[k] && Array.isArray(priceMap[k].monthly_ohlc) && priceMap[k].monthly_ohlc.length) {
+                source = priceMap[k];
+                break;
+            }
+        }
+    }
+    if (!source || !Array.isArray(source.monthly_ohlc)) return [];
+    const arr = source.monthly_ohlc.slice(-monthsCount);
+    // Normalize month to YYYY-MM
+    return arr.map(m => {
+        // If Month is like "2025-10-31" -> YYYY-MM
+        if (m.Month) return m.Month.slice(0, 7);
+        // else if Date-like fallback
+        if (m.Date) {
+            const d = new Date(m.Date);
+            const yyyy = d.getUTCFullYear();
+            const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+            return `${yyyy}-${mm}`;
+        }
+        return null;
+    }).filter(Boolean);
+};
+
+// Build a quick lookup of monthly OHLC by tickerKey + YYYY-MM
+const buildMonthlyLookup = (priceMap) => {
+    const lookup = {};
+    for (const rawKey of Object.keys(priceMap)) {
+        const keyNorm = normalizeTickerKey(rawKey);
+        const item = priceMap[rawKey];
+        if (!item || !Array.isArray(item.monthly_ohlc)) continue;
+        lookup[keyNorm] = {};
+        for (const rec of item.monthly_ohlc) {
+            // Month field expected e.g. "2025-10-31"
+            let monthKey = null;
+            if (rec.Month) monthKey = rec.Month.slice(0, 7);
+            else if (rec.Date) {
+                const d = new Date(rec.Date);
+                monthKey = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+            }
+            if (!monthKey) continue;
+            lookup[keyNorm][monthKey] = {
+                open: typeof rec.Open === 'number' ? rec.Open : null,
+                close: typeof rec.Close === 'number' ? rec.Close : null,
+                high: rec.High,
+                low: rec.Low,
+                volume: rec.Volume
+            };
+        }
+    }
+    return lookup;
+};
+
+/**
+ * computePerformance(priceMap, portfolio)
+ * returns array: [ { name: 'Portfolio', series: [{ month: 'YYYY-MM', growthPct: 1.23 }, ... ] }, 
+ *                 { name: 'Nifty', series: [...] }, 
+ *                 { name: 'Sensex', series: [...] } ]
+ */
+const computePerformance = (priceMap = {}, portfolio = {}) => {
+    const months = pickMonths(priceMap, 6); // latest 6 months in YYYY-MM
+    if (!months || months.length === 0) return [];
+
+    const monthlyLookup = buildMonthlyLookup(priceMap);
+
+    // Helper to compute growth series for a single instrument keyed by normalized tickerKey
+    const computeInstrumentSeries = (tickerKey) => {
+        const series = [];
+        const lk = monthlyLookup[normalizeTickerKey(tickerKey)];
+        if (!lk) {
+            for (const m of months) series.push({ month: m, growthPct: null });
+            return series;
+        }
+        const firstOpen = lk[months[0]] && (lk[months[0]].open != null) ? lk[months[0]].open : null;
+        if (firstOpen == null) {
+            for (const m of months) series.push({ month: m, growthPct: null });
+            return series;
+        }
+        for (const m of months) {
+            const rec = lk[m];
+            if (!rec || rec.close == null) {
+                series.push({ month: m, growthPct: null });
+                continue;
+            }
+            // <-- changed formula: comparative percentage (close / firstOpen * 100) -->
+            const compPct = (rec.close / firstOpen) * 100;
+            series.push({ month: m, growthPct: Math.round(compPct * 100) / 100 });
+        }
+        return series;
+    };
+
+    // Nifty & Sensex
+    const niftySeries = computeInstrumentSeries('^NSEI');
+    const sensexSeries = computeInstrumentSeries('^BSESN');
+
+    // Portfolio series:
+    // For each month:
+    //   portfolioOpenRef = sum(shares * open_of_first_month_for_that_instrument)  <-- that's the "opening of the 1st month" reference for portfolio
+    //   monthlyCloseValue = sum(shares * close_of_that_month_for_that_instrument)
+    // growthPct = (monthlyCloseValue - portfolioOpenRef) / portfolioOpenRef * 100
+    const holdings = (portfolio && portfolio.holdings) || [];
+    const portfolioSeries = [];
+
+    // Build per-holding lookup of normalized ticker and shares
+    const holdingDefs = holdings.map(h => {
+        return {
+            tickerRaw: h.ticker,
+            tickerKey: normalizeTickerKey(h.ticker),
+            shares: Number(h.shares || 0)
+        };
+    });
+
+    // compute portfolio reference open (sum of shares * open of first month for each holding)
+    let portfolioOpenRef = 0;
+    let anyMissingInOpenRef = false;
+    for (const hd of holdingDefs) {
+        const lk = monthlyLookup[hd.tickerKey];
+        if (!lk || !lk[months[0]] || lk[months[0]].open == null) {
+            anyMissingInOpenRef = true;
+            break;
+        }
+        portfolioOpenRef += hd.shares * lk[months[0]].open;
+    }
+
+    // If missing reference open for any holding, we cannot compute portfolio growth reliably -> set nulls
+    if (anyMissingInOpenRef || portfolioOpenRef === 0) {
+        for (const m of months) portfolioSeries.push({ month: m, growthPct: null });
+    } else {
+        for (const m of months) {
+            let monthCloseValue = 0;
+            let anyMissing = false;
+            for (const hd of holdingDefs) {
+                const lk = monthlyLookup[hd.tickerKey];
+                if (!lk || !lk[m] || lk[m].close == null) {
+                    anyMissing = true;
+                    break;
+                }
+                monthCloseValue += hd.shares * lk[m].close;
+            }
+            if (anyMissing) {
+                portfolioSeries.push({ month: m, growthPct: null });
+            } else {
+                // <-- changed formula: comparative percentage (monthCloseValue / portfolioOpenRef * 100) -->
+                const compPct = (monthCloseValue / portfolioOpenRef) * 100;
+                portfolioSeries.push({ month: m, growthPct: Math.round(compPct * 100) / 100 });
+            }
+        }
+    }
+
+    return [
+        { name: 'Portfolio', series: portfolioSeries },
+        { name: 'Nifty', series: niftySeries },
+        { name: 'Sensex', series: sensexSeries }
+    ];
+};
+
+
+
+// ========================================================================================== //
 
 
 export async function GET(req) {
@@ -111,6 +289,9 @@ export async function GET(req) {
         }
 
         const priceMap = await Portfolio.enrichWithMarketPrices(portfolio);
+
+        console.log(priceMap);
+
         // const holdingsInfo = portfolio.computeHoldingValues(priceMap);
         // const summary = portfolio.computePortfolioSummary(priceMap);
         const holdingsInfo = computeHoldingValues(priceMap, portfolio);
@@ -120,6 +301,7 @@ export async function GET(req) {
         // console.log("holdingsInfo-> ", holdingsInfo);
         // console.log("summary-> ", summary);
 
+        const performance = computePerformance(priceMap, portfolio);
 
         const dto = {
             summary: {
@@ -137,13 +319,14 @@ export async function GET(req) {
                 purchasePrice: h.purchase_price,
                 purchaseDate: h.purchase_date,
                 sector: h.sector,
+                exchange: h.exchange,
                 marketPrice: h.marketPrice,
                 invested: h.invested,
                 value: h.value,
                 gain: h.gain,
                 gainPct: h.gainPct,
             })),
-            performance: [],
+            performance: performance,
             sectorAllocation: summary.sectors.map(s => ({
                 name: s.sector,
                 value: s.pct,
@@ -155,6 +338,7 @@ export async function GET(req) {
                 .slice(0, 5)
                 .map(h => ({
                     symbol: h.ticker,
+                    exchange: h.exchange,
                     name: h.ticker,
                     gain: h.gainPct,
                     value: h.value,

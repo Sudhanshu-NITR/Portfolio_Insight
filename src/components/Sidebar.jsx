@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import AddHoldingModal from '@/components/AddHoldingModal';
 import { useRouter, usePathname } from 'next/navigation';
 
+// =================== UI Imports =================== //
 import {
   Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem,
   SidebarMenuButton, SidebarProvider, SidebarTrigger
@@ -14,13 +16,14 @@ import { useSession, signOut } from "next-auth/react";
 import {
   BarChart3, TrendingUp, Wallet, MessageSquare, Home, Plus, Bell, LogOut
 } from 'lucide-react';
+// =================== UI Imports =================== //
 
-import AddHoldingModal from '@/components/AddHoldingModal';
 
-export default function MainAppLayout({ children, selectedPortfolioId = null }) {
+export default function MainAppLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
+
   const [darkMode, setDarkMode] = useState(() => {
     try {
       return localStorage.getItem('dark-mode') === 'true';
@@ -33,10 +36,10 @@ export default function MainAppLayout({ children, selectedPortfolioId = null }) 
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
-      try { localStorage.setItem('dark-mode', 'true'); } catch {}
+      try { localStorage.setItem('dark-mode', 'true'); } catch { }
     } else {
       document.documentElement.classList.remove('dark');
-      try { localStorage.setItem('dark-mode', 'false'); } catch {}
+      try { localStorage.setItem('dark-mode', 'false'); } catch { }
     }
   }, [darkMode]);
 
@@ -54,14 +57,14 @@ export default function MainAppLayout({ children, selectedPortfolioId = null }) 
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-md text-muted-foreground">Loading…</p>
       </div>
     );
   }
 
   const avatarInitial = session?.user?.name?.[0] ??
-                        session?.user?.email?.[0] ??
-                        '?';
+    session?.user?.email?.[0] ??
+    '?';
 
   return (
     <SidebarProvider>
@@ -111,8 +114,8 @@ export default function MainAppLayout({ children, selectedPortfolioId = null }) 
 
               {session ? (
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-sidebar-accent">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback>{avatarInitial.toUpperCase()}</AvatarFallback>
+                  <Avatar className="w-8 h-8 rounded-full">
+                    <AvatarFallback className={"bg-accent-foreground text-accent font-semibold"}>{avatarInitial.toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{session.user?.name ?? session.user?.email}</p>
@@ -123,7 +126,6 @@ export default function MainAppLayout({ children, selectedPortfolioId = null }) 
                   </Button>
                 </div>
               ) : (
-                // If no session, you might still want to show a sign-in CTA instead of nothing
                 <div className="text-sm text-muted-foreground">Not signed in</div>
               )}
             </div>
@@ -151,11 +153,13 @@ export default function MainAppLayout({ children, selectedPortfolioId = null }) 
           show={showAddHolding}
           onClose={() => setShowAddHolding(false)}
           onAdded={() => {
-            // Refresh page data after a holding is added. Adjust if you use SWR/React Query instead.
+            console.log("onAdded callback triggered");
             try {
+              // Refresh the page on adding
               router.refresh();
-            } catch {
-              // fallback: close modal only (modal already closes in AddHoldingModal after success)
+            } catch (err) {
+              console.error("Refresh failed:", err);
+              setShowAddHolding(false);
             }
           }}
         />

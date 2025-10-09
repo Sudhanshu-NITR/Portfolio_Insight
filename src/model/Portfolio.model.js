@@ -85,7 +85,6 @@ PortfolioSchema.statics.enrichWithMarketPrices = async function (portfolioDoc) {
             if (!normalized[t] && raw[t]) normalized[t] = raw[t];
             if (!normalized[stripped] && raw[stripped]) normalized[stripped] = raw[stripped];
         });
-
         return normalized;
     } catch (err) {
         console.warn("enrichWithMarketPrices failed:", err.message);
