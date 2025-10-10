@@ -290,8 +290,6 @@ export async function GET(req) {
 
         const priceMap = await Portfolio.enrichWithMarketPrices(portfolio);
 
-        console.log(priceMap);
-
         // const holdingsInfo = portfolio.computeHoldingValues(priceMap);
         // const summary = portfolio.computePortfolioSummary(priceMap);
         const holdingsInfo = computeHoldingValues(priceMap, portfolio);

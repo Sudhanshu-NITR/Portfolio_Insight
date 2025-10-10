@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
+import axios from "axios";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -26,18 +27,31 @@ export default function SignInPage() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    const res = await signIn("credentials", {
-      redirect: false,
-      email: formData.email,
-      password: formData.password,
-    });
-    setIsLoading(false);
-    if (res?.error) {
-      setError(res.error);
-    } else {
-      router.push("/dashboard");
+
+    try {
+      const res = await signIn("credentials", {
+        redirect: false,
+        email: formData.email,
+        password: formData.password,
+      });
+      if (res?.error) {
+        setError(res.error);
+        return;
+      }
+
+      const resp = await axios.get("/api/profile-status", { withCredentials: true });
+
+      const { profileCompleted } = resp.data;
+      router.push(profileCompleted ? "/dashboard" : "/investment-profile");
+
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   }
+
 
   async function handleRegisterSubmit(e) {
     e.preventDefault();
@@ -74,7 +88,7 @@ export default function SignInPage() {
       if (res?.error) {
         setError(res.error);
       } else {
-        router.push("/dashboard");
+        router.push("/investment-profile");
       }
     } catch (err) {
       setError(err?.message || "Something went wrong");
@@ -232,7 +246,7 @@ export default function SignInPage() {
 //   password: z.string().min(1)
 // });
 
-// export default function SignInPage() {  
+// export default function SignInPage() {
 //   const router = useRouter();
 //   const [error, setError] = useState(null);
 //   const { register, handleSubmit } = useForm({ resolver: zodResolver(schema) });

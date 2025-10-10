@@ -14,7 +14,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { useSession, signOut } from "next-auth/react";
 import {
-  BarChart3, TrendingUp, Wallet, MessageSquare, Home, Plus, Bell, LogOut
+  BarChart3, TrendingUp, Wallet, MessageSquare, Home, Plus, Bell, LogOut,
+  ReceiptIndianRupee
 } from 'lucide-react';
 // =================== UI Imports =================== //
 
@@ -52,6 +53,7 @@ export default function MainAppLayout({ children }) {
     { id: 'holdings', label: 'Holdings', icon: Wallet, href: '/holdings' },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, href: '/analytics' },
     { id: 'ai-insights', label: 'AI Insights', icon: MessageSquare, href: '/ai-insights' },
+    { id: 'investment-profile', label: 'Investment Profile', icon: ReceiptIndianRupee, href: '/investment-profile' },
   ];
 
   if (status === "loading") {

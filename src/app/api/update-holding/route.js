@@ -39,14 +39,6 @@ export async function PATCH(req) {
 
         await p.save();
 
-        let priceMap = {};
-        try {
-            priceMap = await Portfolio.enrichWithMarketPrices(p);
-        } catch (err) {
-            console.warn("price enrichment failed:", err.message || err);
-        }
-        const summary = p.computePortfolioSummary(priceMap);
-
         const updated = await Portfolio.findById(id).lean().exec();
         return NextResponse.json({ ok: true, portfolio: updated, summary });
 
