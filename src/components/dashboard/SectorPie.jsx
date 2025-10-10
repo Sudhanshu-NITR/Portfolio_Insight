@@ -60,7 +60,7 @@ export default function SectorPie({ sectorPie }) {
                 style={{ backgroundColor: sectorColor[sector.name] || '#BDBDBD' }}
               />
               <span className="text-muted-foreground">
-                {sector.name}: {sector.value.toFixed(2) ?? 0}%
+                {sector.name}: {(sector.value?.toFixed(2) ?? 0)}%
               </span>
             </div>
           ))}
