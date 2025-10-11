@@ -74,7 +74,7 @@ def fetch_quotes_payload(tickers: list) -> dict:
 
         def to_monthly6(tdf: pd.DataFrame):
             agg = {"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}
-            m = tdf.resample("M").agg(agg).dropna(how="all").tail(6)
+            m = tdf.resample("ME").agg(agg).dropna(how="all").tail(6)
             return m.assign(Month=lambda x: x.index.strftime("%Y-%m-%d"))[
                 ["Month", "Open", "High", "Low", "Close", "Volume"]
             ].reset_index(drop=True).to_dict(orient="records")

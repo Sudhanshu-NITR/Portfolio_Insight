@@ -21,13 +21,8 @@ def comprehensive_market_data():
     result = ComprehensiveMarketService.get_full_analysis(
         tickers, include_intraday, include_fundamentals
     )
-    
+
     return jsonify(result)
-
-from flask import Blueprint, request, jsonify
-from services.quotes_service import fetch_quotes_payload
-
-market_bp = Blueprint('market', __name__)
 
 @market_bp.route("/market/quotes", methods=["POST"])
 def market_quotes():
