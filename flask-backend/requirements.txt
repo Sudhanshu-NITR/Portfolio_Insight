@@ -2,3 +2,4 @@ flask
 yfinance
 pandas
 flask_cors
+dotenv

@@ -1,34 +1,13 @@
-# import yfinance as yf
-# import pandas as pd
+import http.client
+import json
 
-# # 1. Define the ticker and download the last 2 months of daily data
-# nifty_ticker = '^NSEI'
-# nifty_data = yf.download(
-#     nifty_ticker,
-#     period="2mo", # Get enough data to ensure we have at least 6 Fridays
-#     interval="1d"
-# )['Close']
+conn = http.client.HTTPSConnection("stock.indianapi.in")
 
-# # 2. Filter the data to get only Fridays
-# # In pandas, Monday is 0 and Friday is 4
-# fridays = nifty_data[nifty_data.index.dayofweek == 4]
+headers = { 'X-Api-Key': "sk-live-bk10DLtYqebh3E6M9Suxq0KG9igXAJQp9B9dVRJY" }
 
-# # 3. Get the most recent 6 Fridays from the filtered list
-# last_5_fridays = fridays.tail()
+conn.request("GET", "/stock?name=Tata+Steel", headers=headers)
 
-# print("---- Nifty 50 Closing Prices for the Last 6 Fridays ----")
-# print(last_5_fridays)
+res = conn.getresponse()
+data = res.read()
 
-
-
-# # tcs = yf.download("TCS.NS", period="6mo", interval="1mo")
-
-# # print(tcs)
-
-
-
-import yfinance as yf
-import pandas as pd
-
-tcs = yf.Ticker("TCS.NS")
-print(tcs.actions.tail(10)) 
+print(json.dumps(data.decode("utf-8"), indent=4))  

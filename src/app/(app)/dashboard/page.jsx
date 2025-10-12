@@ -10,6 +10,7 @@ import TopPerformers from '@/components/dashboard/TopPerformers';
 import RiskMetrics from '@/components/dashboard/RiskMetrics';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import axios from 'axios';
 
 export default function Dashboard() {
   const dispatch = useDispatch();
@@ -92,6 +93,24 @@ export default function Dashboard() {
     maxDrawdown: null,
     beta: null,
   };
+
+  useEffect(()=> {
+    const fetchData = async () => {
+      try {
+        const res = await axios.post('/api/test-api', { tickers : ["RELIANCE","TCS","HDFCBANK"] });
+        console.log(res.data);
+        
+      } catch (error) {
+        console.error("Error fetchong test data, e: ", error);
+      }
+    }
+
+    fetchData();
+  }, [])
+
+
+
+
 
   return (
     <div className="space-y-6">
