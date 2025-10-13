@@ -1,0 +1,5 @@
+{
+  "manifest": [
+    { "type": "pdf", "path": "books/APPLIED_CORPORATE_FINANCE.pdf", "metadata": { "category": "investment_principles", "source": "applied_corporate_finance" } }
+  ]
+}
