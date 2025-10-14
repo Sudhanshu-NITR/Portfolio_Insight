@@ -7,6 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
+import { formatCurrency } from '@/utils';
 
 const sectorColor = {
   IT: '#8884d8',
@@ -16,15 +17,6 @@ const sectorColor = {
   Auto: '#ff7c7c',
   FMCG: '#8dd1e1',
   Others: '#d084d0'
-};
-
-const formatCurrency = (amount) => {
-  if (amount === null || amount === undefined) return '—';
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0
-  }).format(amount);
 };
 
 export default function SectorPie({ sectorPie }) {

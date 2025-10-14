@@ -6,6 +6,8 @@ export const fetchDashboard = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const res = await axios.get('/api/dashboard-data');
+            console.log(res.data);
+            
             return res.data;
         } catch (e) {
             return rejectWithValue(e?.message || 'Network error');

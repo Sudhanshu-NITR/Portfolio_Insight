@@ -61,12 +61,12 @@ PortfolioSchema.methods.computeHoldingValues = function (priceMap = {}) {
 
 
 PortfolioSchema.statics.enrichWithMarketPrices = async function (portfolioDoc) {
-    const analyticsUrl = process.env.FLASK_BACKEND_URL || "http://localhost:5000";
+    const flaskBackendUrl = process.env.FLASK_BACKEND_URL || "http://localhost:5000";
     const tickers = Array.from(new Set(portfolioDoc.holdings.map(h => String(h.ticker).toUpperCase())));
     if (!tickers.length) return {};
 
     try {
-        const resp = await axios.post(`${analyticsUrl}/market/quotes`, { tickers }, { timeout: 15000 });
+        const resp = await axios.post(`${flaskBackendUrl}/market/quotes/get-pricemap`, { tickers }, { timeout: 15000 });
         if (!(resp.status >= 200 && resp.data)) return {};
 
         const raw = resp.data || {};

@@ -7,21 +7,7 @@ import {
   BarChart3,
   Activity
 } from 'lucide-react';
-
-const formatCurrency = (amount) => {
-  if (amount === null || amount === undefined) return '—';
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0
-  }).format(amount);
-};
-
-const formatPercent = (percent) => {
-  if (percent === null || percent === undefined || !isFinite(percent)) return '—';
-  const sign = percent >= 0 ? '+' : '';
-  return `${sign}${percent.toFixed(2)}%`;
-};
+import { formatCurrency, formatPercent } from '@/utils';
 
 const gainColor = (value) => (value >= 0 ? 'text-green-600' : 'text-red-600');
 
