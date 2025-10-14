@@ -42,3 +42,7 @@ next-env.d.ts
 
 # Flask 
 __pycache__/
+
+# Test folders and files
+/folders_context.txt
+/pyt.py
