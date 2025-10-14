@@ -3,7 +3,8 @@ from flask_cors import CORS
 from routes.market_routes import market_bp
 from routes.tools_routes import tools_bp
 # from routes.unified_rag_routes import rag_bp  # Using only unified routes
-from routes.rag_tool_routes import rag_bp
+# from routes.rag_tool_routes import rag_bp
+from routes.langgraph_routes import rag_bp
 from config import Config
 
 def create_app():

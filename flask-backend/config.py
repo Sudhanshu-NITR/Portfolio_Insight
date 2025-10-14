@@ -21,6 +21,10 @@ class Config:
     GEMINI_CHAT_MODEL = os.getenv("GEMINI_CHAT_MODEL", "gemini-1.5-pro")
     GEMINI_EMBED_MODEL = os.getenv("GEMINI_EMBED_MODEL", "text-embedding-004")
 
+    # Groq Configuration
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", None)  # Your Groq API key
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+
     # Market Data APIs
     INDIANAPI_BASE = os.getenv("INDIANAPI_BASE", "https://stock.indianapi.in")
     INDIANAPI_KEY = os.getenv("INDIANAPI_KEY")
@@ -34,7 +38,7 @@ class Config:
     VECTOR_DB_DIR = os.getenv("VECTOR_DB_DIR", "./.chroma")
     
     # LLM Parameters
-    CHAT_TEMPERATURE = float(os.getenv("CHAT_TEMPERATURE", "0.2"))
+    CHAT_TEMPERATURE = float(os.getenv("CHAT_TEMPERATURE", "0.3"))
     MAX_TOKENS = int(os.getenv("MAX_TOKENS", "2000"))  # Increased for better responses
     
     # RAG Configuration

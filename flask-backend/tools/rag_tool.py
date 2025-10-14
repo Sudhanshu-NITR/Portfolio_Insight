@@ -1,7 +1,6 @@
 from langchain.tools import tool
 from pydantic import BaseModel, Field
 from rag.retriever import get_retriever
-import json
 
 class KnowledgeBaseSearchInput(BaseModel):
     """Input for searching the financial knowledge base"""
@@ -14,6 +13,7 @@ class KnowledgeBaseSearchInput(BaseModel):
         default=4,
         description="Number of relevant documents to retrieve (1-10)"
     )
+
 
 @tool("search_knowledge_base", args_schema=KnowledgeBaseSearchInput)
 def search_knowledge_base(query: str, num_results: int = 4) -> str:
@@ -40,41 +40,21 @@ def search_knowledge_base(query: str, num_results: int = 4) -> str:
         docs = retriever.invoke(query)
         
         if not docs:
-            return json.dumps({
-                "status": "no_results",
-                "message": "No relevant information found in knowledge base",
-                "query": query
-            })
+            return "No relevant information found in knowledge base."
         
         # Limit results
         docs = docs[:min(num_results, len(docs))]
         
-        # Format results
-        results = []
+        # Format results into a single concatenated string for tool response
+        content_pieces = []
         for i, doc in enumerate(docs, 1):
             source = doc.metadata.get('source', 'Unknown')
-            content = doc.page_content[:1000]  # Limit content length
-            
-            results.append({
-                "result_number": i,
-                "source": source,
-                "content": content,
-                "relevance_score": getattr(doc, 'score', None)
-            })
+            snippet = doc.page_content[:1000]  # Limit content length
+            content_pieces.append(f"Source: {source}\n{snippet}\n")
         
-        response = {
-            "status": "success",
-            "query": query,
-            "total_results": len(results),
-            "results": results,
-            "usage_note": "This content is from financial literature and books. Combine with current market data if needed."
-        }
+        combined_content = "\n---\n".join(content_pieces)
         
-        return json.dumps(response)
+        return combined_content
         
     except Exception as e:
-        return json.dumps({
-            "status": "error",
-            "error": str(e),
-            "message": "Failed to search knowledge base"
-        })
+        return f"Failed to search knowledge base due to error: {str(e)}"

@@ -1,8 +1,9 @@
+
 # Flask Framework
 flask
 flask-cors
 
-# Data Processing
+# Data Processing  
 pandas
 numpy
 requests
@@ -10,7 +11,7 @@ requests
 # Financial Data
 yfinance
 
-# Web Scraping & Document Processing  
+# Web Scraping & Document Processing
 beautifulsoup4
 pypdf
 tiktoken
@@ -18,11 +19,14 @@ tiktoken
 # Vector Database
 chromadb
 
-# LangChain Framework
+# LangChain Framework (Core only - no deprecated agents)
 langchain
 langchain-community
 langchain-core
 langchain-chroma
+
+# LangGraph - Modern workflow framework
+langgraph
 
 # LLM Providers
 langchain-ollama
@@ -42,3 +46,9 @@ python-dotenv
 # Development & Testing
 pytest
 pytest-flask
+
+# Additional utilities
+Pillow
+python-multipart
+
+groq

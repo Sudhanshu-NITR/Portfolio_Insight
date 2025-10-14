@@ -199,7 +199,5 @@ ALL_TOOLS = [
     get_corporate_actions,
     get_trending_stocks,
     get_stock_forecasts,
-    
-    # NEW: Knowledge base search tool
     search_knowledge_base,
 ]
