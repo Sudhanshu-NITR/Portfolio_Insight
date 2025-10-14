@@ -1,18 +1,44 @@
+# Flask Framework
 flask
 flask-cors
-requests
+
+# Data Processing
 pandas
+numpy
+requests
+
+# Financial Data
 yfinance
-chromadb
-tiktoken
+
+# Web Scraping & Document Processing  
 beautifulsoup4
 pypdf
+tiktoken
 
+# Vector Database
+chromadb
+
+# LangChain Framework
 langchain
 langchain-community
 langchain-core
-langchain-google-genai
-langchain-ollama
 langchain-chroma
+
+# LLM Providers
+langchain-ollama
+langchain-google-genai
 langchain-huggingface
+
+# Text Processing & Embeddings
 sentence-transformers
+langchain-text-splitters
+
+# Data Validation
+pydantic
+
+# Environment Management
+python-dotenv
+
+# Development & Testing
+pytest
+pytest-flask
