@@ -1,370 +1,465 @@
-'use client';
-import React, { useEffect, useMemo, useState } from 'react';
+"use client";
+import React, { useState, useEffect, useRef } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchDashboard } from '@/store/portfolioSlice';
+import axios from 'axios';
+
+// UI Components
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Label } from '@/components/ui/label';
 import {
-    Search,
-    MoreHorizontal,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from '@/components/ui/table';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
+} from '@/components/ui/dialog';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+// Icons
+import {
+    Upload,
+    Download,
     Edit,
     Trash2,
-    TrendingUp,
-    TrendingDown,
-    FileText,
-    Upload
+    Plus,
+    RefreshCw
 } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchDashboard } from '@/store/portfolioSlice';
 
-export default function Holdings() {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [sortBy, setSortBy] = useState('symbol');
-    const [sortOrder, setSortOrder] = useState('asc');
+// Utils
+import { formatCurrency, formatPercent } from '@/utils';
 
+export default function HoldingsPage() {
     const dispatch = useDispatch();
+    const { holdings, loading } = useSelector(state => state.portfolio);
 
-    // read from redux but protect against undefined
-    const store = useSelector((state) => state?.portfolio ?? {});
-    const summary = store?.summary ?? {};
-    const holdings = Array.isArray(store?.holdings) ? store.holdings : [];
+    // States
+    const [isImporting, setIsImporting] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [importModalOpen, setImportModalOpen] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [selectedHolding, setSelectedHolding] = useState(null);
+    const [importError, setImportError] = useState('');
+    const [importSuccess, setImportSuccess] = useState('');
 
-    // fetch dashboard on mount if dispatch exists
+    // Form states for editing
+    const [editForm, setEditForm] = useState({
+        ticker: '',
+        exchange: 'NSE',
+        shares: '',
+        purchase_price: '',
+        purchase_date: '',
+        sector: '',
+        notes: ''
+    });
+
+    // File input ref
+    const fileInputRef = useRef(null);
+
     useEffect(() => {
-        try {
-            if (typeof dispatch === 'function') dispatch(fetchDashboard());
-        } catch (e) {
-            // safe fallback — do not crash if dispatch unavailable
-            // console.warn('dispatch unavailable', e);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        dispatch(fetchDashboard());
     }, [dispatch]);
 
-    // helpers to format numbers safely
-    const formatCurrency = (amount) => {
-        if (amount === null || amount === undefined || Number.isNaN(Number(amount))) return '—';
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-            maximumFractionDigits: 0
-        }).format(Number(amount));
-    };
-
-    const formatPercent = (percent) => {
-        if (percent === null || percent === undefined || !isFinite(percent)) return '—';
-        const sign = percent >= 0 ? '+' : '';
-        return `${sign}${percent.toFixed(2)}%`;
-    };
-
-    const totalCurrent = Number(summary?.totalValue ?? 0);
-    const totalInvested = Number(summary?.totalInvested ?? 0);
-    const totalPnL = Number(summary?.totalGainLoss ?? 0);
-    const totalPnLPercent = Number(summary?.totalGainLossPercent ?? 0);
-
-    const holdingss = useMemo(() => {
-        return holdings.map(h => (h && typeof h === 'object') ? h : {});
-    }, [holdings]);
-
-    const filteredHoldings = useMemo(() => {
-        const q = String(searchTerm || '').toLowerCase().trim();
-
-        const arr = holdingss.filter(h => {
-            const ticker = String(h?.ticker ?? h?.symbol ?? '').toLowerCase();
-            const name = String(h?.name ?? '').toLowerCase();
-            if (!q) return true;
-            return ticker.includes(q) || name.includes(q);
-        });
-
-        // safe sorting — use a getter, handle missing values gracefully
-        const getVal = (item, key) => {
-            if (!item) return undefined;
-            // support nested or alternative names used across code (shares/quantity, marketPrice/currentPrice)
-            if (key === 'symbol' || key === 'ticker') return item?.ticker ?? item?.symbol;
-            if (key === 'quantity' || key === 'shares') return item?.shares ?? item?.quantity;
-            if (key === 'currentPrice' || key === 'marketPrice') return item?.marketPrice ?? item?.currentPrice;
-            return item[key];
-        };
-
-        arr.sort((a, b) => {
-            const aRaw = getVal(a, sortBy);
-            const bRaw = getVal(b, sortBy);
-
-            // push undefined/null to end
-            if (aRaw == null && bRaw == null) return 0;
-            if (aRaw == null) return 1;
-            if (bRaw == null) return -1;
-
-            // numeric compare first
-            const aNum = Number(aRaw);
-            const bNum = Number(bRaw);
-            if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) {
-                return sortOrder === 'asc' ? aNum - bNum : bNum - aNum;
-            }
-
-            // fallback to string compare
-            const aStr = String(aRaw);
-            const bStr = String(bRaw);
-            return sortOrder === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
-        });
-
-        return arr;
-    }, [holdingss, searchTerm, sortBy, sortOrder]);
-
-    const handleSort = (column) => {
-        if (sortBy === column) setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-        else {
-            setSortBy(column);
-            setSortOrder('asc');
-        }
-    };
-
-    // Edit: robust prompt fallback (no crash)
-    const handleEdit = async (holding) => {
-        if (!holding || !holding.id) {
-            alert('Cannot edit: invalid holding');
-            return;
-        }
-        const currShares = numericSafe(holding.shares ?? holding.quantity ?? 0);
-        const input = prompt(`Edit shares for ${holding.ticker ?? holding.symbol ?? 'holding'}`, String(currShares));
-        if (input == null) return; // user cancelled
-        const newShares = Number(input);
-        if (!Number.isFinite(newShares) || newShares < 0) {
-            alert('Invalid shares value');
-            return;
-        }
-
-        // Attempt API call; if you don't have an API, simply refetch dashboard if dispatch exists
+    // Export CSV functionality
+    const handleExportCSV = async () => {
+        setIsExporting(true);
         try {
-            const body = { ...holding, shares: newShares };
-            // If your backend supports PUT /api/holdings/:id uncomment the fetch block below and adapt path
-            /*
-            const res = await fetch(`/api/holdings/${holding.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body)
+            const response = await axios.get('/api/export-holdings', {
+                responseType: 'blob'
             });
-            if (!res.ok) throw new Error('Update failed');
-            */
-            if (typeof dispatch === 'function') dispatch(fetchDashboard());
-        } catch (e) {
-            console.error('Edit failed', e);
-            alert('Failed to update holding (check console).');
+
+            const blob = new Blob([response.data], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `holdings-${new Date().toISOString().split('T')}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Failed to export holdings. Please try again.');
+        } finally {
+            setIsExporting(false);
         }
     };
 
-    // Delete: robust, confirm, attempt API then refresh
-    const handleDelete = async (holdingId) => {
-        if (!holdingId) {
-            alert('Invalid holding id');
-            return;
+    // Import CSV functionality
+    const handleFileSelect = (event) => {
+        const file = event.target.files;
+        if (file && file.type === 'text/csv') {
+            importCSV(file);
+        } else {
+            setImportError('Please select a valid CSV file');
         }
-        const confirmed = confirm('Delete this holding? This cannot be undone.');
-        if (!confirmed) return;
+    };
+
+    const importCSV = async (file) => {
+        setIsImporting(true);
+        setImportError('');
+        setImportSuccess('');
+
+        const formData = new FormData();
+        formData.append('file', file);
 
         try {
-            // If backend exists: uncomment and adapt
-            /*
-            const res = await fetch(`/api/holdings/${holdingId}`, { method: 'DELETE' });
-            if (!res.ok) throw new Error('Delete failed');
-            */
-            if (typeof dispatch === 'function') dispatch(fetchDashboard());
-        } catch (e) {
-            console.error('Delete failed', e);
-            alert('Failed to delete holding (check console).');
+            const response = await axios.post('/api/import-holdings', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            setImportSuccess(`Successfully imported ${response.data.imported} holdings`);
+            dispatch(fetchDashboard()); // Refresh data
+            setTimeout(() => {
+                setImportModalOpen(false);
+                setImportSuccess('');
+            }, 2000);
+
+        } catch (error) {
+            setImportError(error.response?.data?.error || 'Failed to import CSV');
+        } finally {
+            setIsImporting(false);
         }
     };
 
-    // small utility
-    function numericSafe(x) {
-        const n = Number(x);
-        return Number.isFinite(n) ? n : 0;
-    }
+    // Edit holding
+    const handleEdit = (holding) => {
+        setSelectedHolding(holding);
+        setEditForm({
+            ticker: holding.ticker,
+            exchange: holding.exchange || 'NSE',
+            shares: holding.shares.toString(),
+            purchase_price: holding.purchasePrice.toString(),
+            purchase_date: holding.purchaseDate ? new Date(holding.purchaseDate).toISOString().split('T') : '',
+            sector: holding.sector || '',
+            notes: holding.notes || ''
+        });
+        setEditModalOpen(true);
+    };
+
+    const handleUpdateHolding = async () => {
+        try {
+            await axios.patch(`/api/update-holding`, {
+                holdingId: selectedHolding.id,
+                ...editForm,
+                shares: parseFloat(editForm.shares),
+                purchase_price: parseFloat(editForm.purchase_price)
+            });
+
+            dispatch(fetchDashboard()); // Refresh data
+            setEditModalOpen(false);
+        } catch (error) {
+            alert('Failed to update holding: ' + (error.response?.data?.error || error.message));
+        }
+    };
+
+    // Delete holding
+    const handleDelete = (holding) => {
+        setSelectedHolding(holding);
+        setDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        try {
+            await axios.delete(`/api/delete-holding`, {
+                data: { holdingId: selectedHolding.id }
+            });
+
+            dispatch(fetchDashboard()); // Refresh data
+            setDeleteDialogOpen(false);
+        } catch (error) {
+            alert('Failed to delete holding: ' + (error.response?.data?.error || error.message));
+        }
+    };
+
+    const gainColor = (value) => value >= 0 ? 'text-green-600' : 'text-red-600';
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold">Holdings</h1>
-                    <p className="text-muted-foreground">Manage your stock portfolio</p>
+                    <p className="text-muted-foreground">Manage your portfolio holdings</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => alert('Import not configured')}>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Import CSV
+
+                <div className="flex items-center gap-3">
+                    <Button
+                        onClick={() => dispatch(fetchDashboard())}
+                        disabled={loading}
+                        variant="outline"
+                        size="sm"
+                    >
+                        <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => alert('Export not configured')}>
-                        <FileText className="w-4 h-4 mr-2" />
-                        Export
+
+                    <Dialog open={importModalOpen} onOpenChange={setImportModalOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                                <Upload className="h-4 w-4 mr-2" />
+                                Import CSV
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Import Holdings from CSV</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                                <div>
+                                    <Label htmlFor="csv-file">Select CSV File</Label>
+                                    <Input
+                                        id="csv-file"
+                                        type="file"
+                                        accept=".csv"
+                                        onChange={handleFileSelect}
+                                        ref={fileInputRef}
+                                        disabled={isImporting}
+                                    />
+                                    <p className="text-sm text-muted-foreground mt-2">
+                                        CSV format: ticker,exchange,shares,purchase_price,purchase_date,sector,notes
+                                    </p>
+                                </div>
+
+                                {importError && (
+                                    <p className="text-sm text-red-600">{importError}</p>
+                                )}
+
+                                {importSuccess && (
+                                    <p className="text-sm text-green-600">{importSuccess}</p>
+                                )}
+
+                                {isImporting && (
+                                    <p className="text-sm text-blue-600">Importing holdings...</p>
+                                )}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Button
+                        onClick={handleExportCSV}
+                        disabled={isExporting || !holdings?.length}
+                        variant="outline"
+                        size="sm"
+                    >
+                        <Download className="h-4 w-4 mr-2" />
+                        {isExporting ? 'Exporting...' : 'Export CSV'}
                     </Button>
                 </div>
             </div>
 
-            {/* Portfolio Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Total Invested</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(totalInvested)}</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Current Value</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(totalCurrent)}</div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Total P&L</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className={`text-2xl font-bold ${totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatCurrency(totalPnL)}
-                        </div>
-                        <div className={`text-sm ${totalPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatPercent(totalPnLPercent)}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Search and Filters */}
             <Card>
                 <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CardTitle>Your Holdings ({filteredHoldings.length})</CardTitle>
-                        <div className="flex items-center gap-2">
-                            <div className="relative">
-                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search holdings..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-8 w-64"
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    <CardTitle>Your Holdings ({holdings?.length || 0})</CardTitle>
                 </CardHeader>
-                <CardContent className="p-5">
-                    <div className="overflow-x-auto">
+                <CardContent>
+                    {!holdings || holdings.length === 0 ? (
+                        <div className="text-center py-8">
+                            <p className="text-muted-foreground">No holdings found</p>
+                            <Button className="mt-4">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Your First Holding
+                            </Button>
+                        </div>
+                    ) : (
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead
-                                        className="cursor-pointer hover:bg-muted/50"
-                                        onClick={() => handleSort('symbol')}
-                                    >
-                                        Symbol
-                                        {sortBy === 'symbol' && (
-                                            sortOrder === 'asc' ? <TrendingUp className="inline w-3 h-3 ml-1" /> : <TrendingDown className="inline w-3 h-3 ml-1" />
-                                        )}
-                                    </TableHead>
-                                    {/* <TableHead>Exchange</TableHead> */}
-                                    <TableHead
-                                        className="cursor-pointer hover:bg-muted/50 text-center"
-                                        onClick={() => handleSort('shares')}
-                                    >
-                                        Quantity
-                                    </TableHead>
-                                    <TableHead
-                                        className="cursor-pointer hover:bg-muted/50 text-center"
-                                        onClick={() => handleSort('marketPrice')}
-                                    >
-                                        Market Price
-                                    </TableHead>
-                                    <TableHead className="text-center">Invested</TableHead>
-                                    <TableHead className="text-center">Current Value</TableHead>
-                                    <TableHead className="text-center">P&L</TableHead>
-                                    <TableHead>Sector</TableHead>
-                                    <TableHead></TableHead>
+                                    <TableHead>Stock</TableHead>
+                                    <TableHead>Exchange</TableHead>
+                                    <TableHead className="text-right">Shares</TableHead>
+                                    <TableHead className="text-right">Avg Price</TableHead>
+                                    <TableHead className="text-right">Market Price</TableHead>
+                                    <TableHead className="text-right">Investment</TableHead>
+                                    <TableHead className="text-right">Current Value</TableHead>
+                                    <TableHead className="text-right">P&L</TableHead>
+                                    <TableHead className="text-center">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredHoldings.map((holdingRaw) => {
-
-                                    const h = holdingRaw ?? {};
-                                    const ticker = h.ticker ?? h.symbol ?? '—';
-                                    const exchange = h.exchange ?? 'NSE';
-                                    const shares = numericSafe(h.shares ?? h.quantity ?? 0);
-                                    const marketPrice = numericSafe(h.marketPrice ?? h.currentPrice ?? h.marketPrice ?? 0);
-                                    const invested = numericSafe(h.invested ?? (shares * (Number(h.purchase_price ?? h.avgPrice ?? 0))));
-                                    const value = numericSafe(h.value ?? (shares * marketPrice));
-                                    const gain = numericSafe(h.gain ?? (value - invested));
-                                    const gainPct = (h.gainPct != null && isFinite(Number(h.gainPct))) ? Number(h.gainPct) : (invested > 0 ? (gain / invested) * 100 : null);
-                                    const sector = h.sector ?? 'Unknown';
-
-                                    return (
-                                        <TableRow key={h.id ?? `${ticker}-${Math.random()}`}>
-                                            <TableCell className="font-medium">
-                                                <div>
-                                                    <div className="font-semibold">{ticker}</div>
-                                                    <Badge variant="outline" className="text-xs">{exchange}</Badge>
-                                                </div>
-                                            </TableCell>
-
-                                            <TableCell className="text-center font-medium">{shares}</TableCell>
-
-                                            <TableCell className="text-center">{formatCurrency(marketPrice)}</TableCell>
-
-                                            <TableCell className="text-center">{formatCurrency(invested)}</TableCell>
-
-                                            <TableCell className="text-center font-medium">{formatCurrency(value)}</TableCell>
-
-                                            <TableCell className="text-center">
-                                                <div className={gain >= 0 ? 'text-green-600' : 'text-red-600'}>
-                                                    <div className="font-medium">{formatCurrency(gain)}</div>
-                                                    <div className="text-sm">{formatPercent(gainPct)}</div>
-                                                </div>
-                                            </TableCell>
-
-                                            <TableCell>
-                                                <Badge variant="secondary" className="text-xs">{sector}</Badge>
-                                            </TableCell>
-
-                                            <TableCell>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="sm">
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={() => handleEdit(h)}>
-                                                            <Edit className="mr-2 h-4 w-4" />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={() => handleDelete(h.id)} className="text-red-600">
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Delete
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })}
-
-                                {filteredHoldings.length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-6">
-                                            No holdings found.
+                                {holdings.map((holding) => (
+                                    <TableRow key={holding.id}>
+                                        <TableCell>
+                                            <div>
+                                                <p className="font-medium">{holding.ticker}</p>
+                                                {holding.sector && (
+                                                    <p className="text-sm text-muted-foreground">{holding.sector}</p>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>{holding.exchange}</TableCell>
+                                        <TableCell className="text-right">{holding.shares}</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(holding.purchasePrice)}</TableCell>
+                                        <TableCell className="text-right">
+                                            {holding.marketPrice ? formatCurrency(holding.marketPrice) : '—'}
+                                        </TableCell>
+                                        <TableCell className="text-right">{formatCurrency(holding.invested)}</TableCell>
+                                        <TableCell className="text-right">
+                                            {holding.value ? formatCurrency(holding.value) : '—'}
+                                        </TableCell>
+                                        <TableCell className={`text-right ${gainColor(holding.gain || 0)}`}>
+                                            <div>
+                                                <p>{holding.gain ? formatCurrency(holding.gain) : '—'}</p>
+                                                <p className="text-sm">{holding.gainPct ? formatPercent(holding.gainPct) : '—'}</p>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleEdit(holding)}
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleDelete(holding)}
+                                                >
+                                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
-                                )}
+                                ))}
                             </TableBody>
                         </Table>
-                    </div>
+                    )}
                 </CardContent>
             </Card>
+
+            {/* Edit Dialog */}
+            <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Holding</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="edit-ticker">Ticker</Label>
+                                <Input
+                                    id="edit-ticker"
+                                    value={editForm.ticker}
+                                    onChange={(e) => setEditForm({ ...editForm, ticker: e.target.value.toUpperCase() })}
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="edit-exchange">Exchange</Label>
+                                <select
+                                    id="edit-exchange"
+                                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                    value={editForm.exchange}
+                                    onChange={(e) => setEditForm({ ...editForm, exchange: e.target.value })}
+                                >
+                                    <option value="NSE">NSE</option>
+                                    <option value="BSE">BSE</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="edit-shares">Shares</Label>
+                                <Input
+                                    id="edit-shares"
+                                    type="number"
+                                    value={editForm.shares}
+                                    onChange={(e) => setEditForm({ ...editForm, shares: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="edit-price">Purchase Price</Label>
+                                <Input
+                                    id="edit-price"
+                                    type="number"
+                                    step="0.01"
+                                    value={editForm.purchase_price}
+                                    onChange={(e) => setEditForm({ ...editForm, purchase_price: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <Label htmlFor="edit-date">Purchase Date</Label>
+                                <Input
+                                    id="edit-date"
+                                    type="date"
+                                    value={editForm.purchase_date}
+                                    onChange={(e) => setEditForm({ ...editForm, purchase_date: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor="edit-sector">Sector</Label>
+                                <Input
+                                    id="edit-sector"
+                                    value={editForm.sector}
+                                    onChange={(e) => setEditForm({ ...editForm, sector: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label htmlFor="edit-notes">Notes</Label>
+                            <Input
+                                id="edit-notes"
+                                value={editForm.notes}
+                                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 mt-6">
+                        <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleUpdateHolding}>
+                            Update Holding
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the holding for {selectedHolding?.ticker}.
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
