@@ -288,8 +288,7 @@ export async function GET(req) {
             }, { status: 200 });
         }
 
-        const priceMap = await Portfolio.enrichWithMarketPrices(portfolio);
-
+        const priceMap = await Portfolio.enrichWithMarketPrices(portfolio);        
         // const holdingsInfo = portfolio.computeHoldingValues(priceMap);
         // const summary = portfolio.computePortfolioSummary(priceMap);
         const holdingsInfo = computeHoldingValues(priceMap, portfolio);

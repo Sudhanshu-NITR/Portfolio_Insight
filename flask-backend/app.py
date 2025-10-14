@@ -2,8 +2,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from routes.market_routes import market_bp
 from routes.tools_routes import tools_bp
-# from routes.unified_rag_routes import rag_bp  # Using only unified routes
-# from routes.rag_tool_routes import rag_bp
+# ONLY import the LangGraph routes - remove other rag_bp imports
 from routes.langgraph_routes import rag_bp
 from config import Config
 
@@ -22,14 +21,14 @@ def create_app():
     # Register blueprints (no duplicates)
     app.register_blueprint(market_bp)
     app.register_blueprint(tools_bp)  
-    app.register_blueprint(rag_bp)
+    app.register_blueprint(rag_bp)  # Only register once
 
     @app.route("/health")
     def health():
         return jsonify({
             "status": "ok",
-            "service": "portfolio-unified-rag-agent",
-            "version": "2.1",
+            "service": "portfolio-langgraph-agent",
+            "version": "2.2-fixed",
             "endpoints": {
                 "main": "/chat",
                 "ingest": "/rag/ingest",
@@ -42,10 +41,11 @@ def create_app():
     @app.route("/")
     def root():
         return jsonify({
-            "message": "Portfolio Insight - Fixed & Optimized",
+            "message": "Portfolio Insight - FIXED & Working",
             "description": "Financial portfolio management with RAG + AI",
             "main_endpoint": "/chat",
             "status": "operational",
+            "approach": "LangGraph with proper tool integration",
             "usage": {
                 "method": "POST",
                 "payload": {
@@ -60,8 +60,13 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    print("🚀 Starting Portfolio Insight Unified RAG + Agentic AI Server...")
+    if app is None:
+        print("❌ App creation failed due to configuration errors")
+        exit(1)
+        
+    print("🚀 Starting Portfolio Insight FIXED LangGraph Server...")
     print("📊 Main endpoint: POST /chat")
     print("📚 Knowledge base ready with embedded financial books")
     print("🔧 Live market data tools available")
+    print("✅ ALL FIXES APPLIED")
     app.run(host="0.0.0.0", port=5000, debug=True)

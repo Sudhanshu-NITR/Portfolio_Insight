@@ -12,6 +12,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 // Icons
 import { MessageSquare, Send, Bot, User } from 'lucide-react';
 
+// Markdown renderer for AI responses
+import ReactMarkdown from 'react-markdown';
+
 const initialMessages = [
   {
     id: '1',
@@ -34,14 +37,12 @@ export default function AIChat() {
   }, [messages]);
 
   const getAIResponse = async (userMessage) => {
-    console.log(process.env.NEXT_PUBLIC_FLASK_BACKEND_URL);
-    
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_FLASK_BACKEND_URL}/chat`, {
-      message: userMessage
-    });
-    // const response = await axios.get(`{}`);
-    // Adjust property if your response is different
-    return response.data.reply || 'No response from AI.';
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_FLASK_BACKEND_URL}/chat`,
+      { question: userMessage }
+    );
+    // Always use .answer for backend replies!
+    return response.data.answer || 'No response from AI.';
   };
 
   const handleSendMessage = async (content) => {
@@ -51,7 +52,7 @@ export default function AIChat() {
       id: Date.now().toString(),
       type: 'user',
       content,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -59,12 +60,14 @@ export default function AIChat() {
     setIsLoading(true);
 
     try {
+      // Get response from backend
       const aiReply = await getAIResponse(content);
+
       const aiResponse = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
         content: aiReply,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
       setMessages(prev => [...prev, aiResponse]);
     } catch (e) {
@@ -72,7 +75,7 @@ export default function AIChat() {
         id: (Date.now() + 1).toString(),
         type: 'ai',
         content: 'Sorry, I could not get a response. Please try again.',
-        timestamp: new Date()
+        timestamp: new Date(),
       };
       setMessages(prev => [...prev, aiResponse]);
     }
@@ -106,9 +109,16 @@ export default function AIChat() {
                     className={`max-w-[80%] rounded-lg p-3 ${message.type === 'user'
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted'
-                    }`}
+                      }`}
                   >
-                    <p className="text-sm whitespace-pre-line">{message.content}</p>
+                    {/* Render AI responses as Markdown, users as plain text */}
+                    {message.type === 'ai' ? (
+                      <p className='text-sm'>
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      </p>
+                    ) : (
+                      <p className="text-sm whitespace-pre-line">{message.content}</p>
+                    )}
                     <p className="text-xs opacity-70 mt-1">
                       {message.timestamp.toLocaleTimeString()}
                     </p>
