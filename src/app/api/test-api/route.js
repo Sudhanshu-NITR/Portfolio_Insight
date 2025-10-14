@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const FLASK_URL = process.env.ANALYTICS_URL || 'http://localhost:5000';
+const FLASK_URL = process.env.FLASK_BACKEND_URL || 'http://localhost:5000';
 
 // Small helper to POST JSON to Flask with basic error handling
 async function postJSON(path, body) {

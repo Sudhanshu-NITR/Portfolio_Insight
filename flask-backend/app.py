@@ -2,43 +2,53 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from routes.market_routes import market_bp
 from routes.tools_routes import tools_bp
-from routes.unified_rag_routes import rag_bp
+from routes.unified_rag_routes import rag_bp  # Using only unified routes
+from config import Config
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, origins="*", supports_credentials=True)
     
-    # Register blueprints
+    # Validate configuration
+    try:
+        Config.validate_config()
+        print("✅ Configuration validated successfully")
+    except ValueError as e:
+        print(f"❌ Configuration error: {e}")
+        return None
+    
+    # Register blueprints (no duplicates)
     app.register_blueprint(market_bp)
     app.register_blueprint(tools_bp)  
-    app.register_blueprint(rag_bp)  # This now contains the unified endpoint
+    app.register_blueprint(rag_bp)
 
     @app.route("/health")
     def health():
         return jsonify({
             "status": "ok",
             "service": "portfolio-unified-rag-agent",
-            "version": "2.0",
+            "version": "2.1",
             "endpoints": {
                 "main": "/chat",
-                "legacy_rag": "/rag/query", 
-                "legacy_agent": "/rag/agent",
                 "ingest": "/rag/ingest",
-                "health": "/health"
+                "health": "/health",
+                "market": "/market/*",
+                "tools": "/tools/*"
             }
         })
 
     @app.route("/")
     def root():
         return jsonify({
-            "message": "Portfolio Insight - Unified RAG + Agentic AI",
-            "description": "Combines financial knowledge base with real-time market data tools",
+            "message": "Portfolio Insight - Fixed & Optimized",
+            "description": "Financial portfolio management with RAG + AI",
             "main_endpoint": "/chat",
+            "status": "operational",
             "usage": {
                 "method": "POST",
                 "payload": {
                     "question": "Your financial question here",
-                    "holdings": ["RELIANCE", "TCS"] # optional
+                    "holdings": ["RELIANCE", "TCS"]  # optional
                 },
                 "example": "What is the current PE ratio of Reliance and how does it compare to industry averages?"
             }

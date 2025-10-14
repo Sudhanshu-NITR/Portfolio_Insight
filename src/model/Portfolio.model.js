@@ -61,7 +61,7 @@ PortfolioSchema.methods.computeHoldingValues = function (priceMap = {}) {
 
 
 PortfolioSchema.statics.enrichWithMarketPrices = async function (portfolioDoc) {
-    const analyticsUrl = process.env.ANALYTICS_URL || "http://localhost:5000";
+    const analyticsUrl = process.env.FLASK_BACKEND_URL || "http://localhost:5000";
     const tickers = Array.from(new Set(portfolioDoc.holdings.map(h => String(h.ticker).toUpperCase())));
     if (!tickers.length) return {};
 

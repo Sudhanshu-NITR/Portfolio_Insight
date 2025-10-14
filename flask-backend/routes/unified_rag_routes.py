@@ -37,8 +37,10 @@ def unified_chat():
     4. Combines retrieval and tool results for comprehensive answers
     """
     _ensure_agent()
+
     
     payload = request.get_json(force=True)
+    print("request-> ", payload)
     question = payload.get("question", "").strip()
     holdings = payload.get("holdings", [])
     
