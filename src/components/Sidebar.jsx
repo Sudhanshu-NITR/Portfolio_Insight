@@ -87,13 +87,13 @@ export default function MainAppLayout({ children }) {
           </Link>
 
           <SidebarContent>
-            <SidebarMenu>
+            <SidebarMenu className={"p-3"}>
               {sidebarItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <Link href={item.href} className="w-full">
                     <SidebarMenuButton
                       isActive={pathname === item.href}
-                      className="w-full"
+                      className="w-full px-4 py-5"
                     >
                       <item.icon className="w-4 h-4" />
                       <span>{item.label}</span>
