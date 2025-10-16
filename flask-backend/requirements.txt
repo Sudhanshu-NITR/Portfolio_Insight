@@ -1,54 +1,49 @@
-
-# Flask Framework
-flask
+# --- Flask Framework ---
+Flask
 flask-cors
 
-# Data Processing  
+# --- Data Processing ---
 pandas
 numpy
 requests
-
-# Financial Data
 yfinance
 
-# Web Scraping & Document Processing
+# --- Web Scraping & Document Processing ---
 beautifulsoup4
 pypdf
 tiktoken
 
-# Vector Database
+# --- Vector Database ---
 chromadb
 
-# LangChain Framework (Core only - no deprecated agents)
+# --- LangChain Framework ---
 langchain
 langchain-community
 langchain-core
 langchain-chroma
 
-# LangGraph - Modern workflow framework
+# --- LangGraph Workflow Framework ---
 langgraph
 
-# LLM Providers
+# --- LLM Providers ---
 langchain-ollama
 langchain-google-genai
 langchain-huggingface
 
-# Text Processing & Embeddings
+# --- Text Processing & Embeddings ---
 sentence-transformers
 langchain-text-splitters
 
-# Data Validation
+# --- Data Validation ---
 pydantic
 
-# Environment Management
+# --- Environment Management ---
 python-dotenv
 
-# Development & Testing
+# --- Development & Testing ---
 pytest
 pytest-flask
 
-# Additional utilities
+# --- Utilities ---
 Pillow
 python-multipart
-
-groq
