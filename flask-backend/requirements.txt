@@ -26,12 +26,12 @@ langchain-chroma
 langgraph
 
 # --- LLM Providers ---
-langchain-ollama
+# langchain-ollama
 langchain-google-genai
-langchain-huggingface
+# langchain-huggingface
 
 # --- Text Processing & Embeddings ---
-sentence-transformers
+# sentence-transformers
 langchain-text-splitters
 
 # --- Data Validation ---
@@ -47,3 +47,6 @@ pytest-flask
 # --- Utilities ---
 Pillow
 python-multipart
+
+
+gunicorn

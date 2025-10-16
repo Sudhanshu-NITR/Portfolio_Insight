@@ -102,7 +102,7 @@ def get_detailed_pricemap(tickers):
         def to_monthly6(tdf: pd.DataFrame):
             agg = {"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}
             m = (
-                tdf.resample("M")
+                tdf.resample("ME")
                 .agg(agg)
                 .dropna(how="all")
                 .tail(6)
