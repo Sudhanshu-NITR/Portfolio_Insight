@@ -50,37 +50,6 @@ export default function HeroSection({ ctaHref }) {
                         </span>
                     </div>
                 </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-                    <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300 bg-gradient-to-br from-white to-blue-50 dark:from-gray-800 dark:to-blue-900/20">
-                        <CardContent className="pt-6 text-center">
-                            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                <Activity className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">10K+</div>
-                            <p className="text-sm text-muted-foreground">Active Users</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300 bg-gradient-to-br from-white to-purple-50 dark:from-gray-800 dark:to-purple-900/20">
-                        <CardContent className="pt-6 text-center">
-                            <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                <TrendingUp className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">₹50Cr+</div>
-                            <p className="text-sm text-muted-foreground">Assets Analyzed</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300 bg-gradient-to-br from-white to-green-50 dark:from-gray-800 dark:to-green-900/20">
-                        <CardContent className="pt-6 text-center">
-                            <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                <Activity className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">99.9%</div>
-                            <p className="text-sm text-muted-foreground">Uptime</p>
-                        </CardContent>
-                    </Card>
-                </div>
             </div>
         </section>
     );
