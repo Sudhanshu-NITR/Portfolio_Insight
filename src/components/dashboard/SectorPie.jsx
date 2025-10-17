@@ -16,6 +16,7 @@ const sectorColor = {
   Pharma: '#ffc658',
   Auto: '#ff7c7c',
   FMCG: '#8dd1e1',
+  Infrastructure: '#607d8b',
   Others: '#d084d0'
 };
 
