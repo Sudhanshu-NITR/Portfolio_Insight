@@ -1,10 +1,14 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+import threading
+import requests
 from routes.market_routes import market_bp
 from routes.tools_routes import tools_bp
-# ONLY import the LangGraph routes - remove other rag_bp imports
 from routes.langgraph_routes import rag_bp
 from config import Config
+
+BACKEND_URL = "https://portfolio-insight-backend.onrender.com"
+PING_INTERVAL = 300  # seconds
 
 def create_app():
     app = Flask(__name__)
@@ -18,10 +22,10 @@ def create_app():
         print(f"❌ Configuration error: {e}")
         return None
     
-    # Register blueprints (no duplicates)
+    # Register blueprints
     app.register_blueprint(market_bp)
     app.register_blueprint(tools_bp)  
-    app.register_blueprint(rag_bp)  # Only register once
+    app.register_blueprint(rag_bp)
 
     @app.route("/health")
     def health():
@@ -50,11 +54,24 @@ def create_app():
                 "method": "POST",
                 "payload": {
                     "question": "Your financial question here",
-                    "holdings": ["RELIANCE", "TCS"]  # optional
+                    "holdings": ["RELIANCE", "TCS"]
                 },
                 "example": "What is the current PE ratio of Reliance and how does it compare to industry averages?"
             }
         })
+
+    def ping_backend():
+        try:
+            response = requests.get(BACKEND_URL)
+            print("Pinged backend successfully")
+        except requests.RequestException as e:
+            print(f"Ping error: {e}")
+        finally:
+            # Schedule next ping
+            threading.Timer(PING_INTERVAL, ping_backend).start()
+
+    # Start pinging after app creation
+    threading.Timer(PING_INTERVAL, ping_backend).start()
 
     return app
 
@@ -65,7 +82,8 @@ if __name__ == "__main__":
         exit(1)
         
     print("🚀 Starting Portfolio Insight FIXED LangGraph Server...")
-    print("📊 Main endpoint: POST /chat")
+    print(f"📊 Main endpoint: POST /chat")
+    print(f"📚 Backend URL: {BACKEND_URL}")
     print("📚 Knowledge base ready with embedded financial books")
     print("🔧 Live market data tools available")
     print("✅ ALL FIXES APPLIED")
