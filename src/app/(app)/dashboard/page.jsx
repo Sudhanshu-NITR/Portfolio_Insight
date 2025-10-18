@@ -94,24 +94,6 @@ export default function Dashboard() {
     beta: null,
   };
 
-  useEffect(()=> {
-    const fetchData = async () => {
-      try {
-        const res = await axios.post('/api/test-api', { tickers : ["RELIANCE","TCS","HDFCBANK"] });
-        console.log(res.data);
-        
-      } catch (error) {
-        console.error("Error fetchong test data, e: ", error);
-      }
-    }
-
-    fetchData();
-  }, [])
-
-
-
-
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -150,8 +132,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TopPerformers performers={performers} />
-        <RiskMetrics metrics={metrics} />
+          <TopPerformers performers={performers} />
       </div>
     </div>
   );

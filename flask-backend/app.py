@@ -71,7 +71,8 @@ def create_app():
             threading.Timer(PING_INTERVAL, ping_backend).start()
 
     # Start pinging after app creation
-    threading.Timer(PING_INTERVAL, ping_backend).start()
+    if Config.ENV == "PROD":
+        threading.Timer(PING_INTERVAL, ping_backend).start()
 
     return app
 

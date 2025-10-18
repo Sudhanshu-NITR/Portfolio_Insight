@@ -1,5 +1,34 @@
 {
   "manifest": [
-    { "type": "pdf", "path": "books/APPLIED_CORPORATE_FINANCE.pdf", "metadata": { "category": "investment_principles", "source": "applied_corporate_finance" } }
+    {
+      "type": "pdf",
+      "path": "books/Applied_Corporate_Finance.pdf",
+      "metadata": { "category": "investment_principles", "source": "applied_corporate_finance" }
+    },
+    {
+      "type": "pdf",
+      "path": "books/Corporate_Finance_An_Introduction.pdf",
+      "metadata": { "category": "investment_principles", "source": "corporate_finance_an_introduction" }
+    },
+    {
+      "type": "pdf",
+      "path": "books/Corporate_Finance_for_Long_Term_Value.pdf",
+      "metadata": { "category": "investment_principles", "source": "corporate_finance_for_long_term_value" }
+    },
+    {
+      "type": "pdf",
+      "path": "books/Introduction-to-Financial-Analysis.pdf",
+      "metadata": { "category": "investment_principles", "source": "introduction_to_financial_analysis" }
+    },
+    {
+      "type": "pdf",
+      "path": "books/Investment_Analysis_and_Portfolio_Management.pdf",
+      "metadata": { "category": "investment_principles", "source": "investment_analysis_and_portfolio_management" }
+    },
+    {
+      "type": "pdf",
+      "path": "books/THE-INTELLIGENT-INVESTOR.pdf",
+      "metadata": { "category": "investment_principles", "source": "the_intelligent_investor" }
+    }
   ]
 }

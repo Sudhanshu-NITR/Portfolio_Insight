@@ -1,6 +1,6 @@
 import os, shutil, subprocess
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma  # pip install -U langchain-chroma
+from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader, UnstructuredURLLoader, TextLoader
 from .llm import make_embedder
 from config import Config

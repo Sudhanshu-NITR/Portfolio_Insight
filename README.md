@@ -35,11 +35,11 @@ Traditional portfolio trackers only show you what you own. **PortfolioInsight** 
 - **Sector Allocation**: Interactive pie charts showing diversification
 - **Top Performers**: Identify your best and worst performing stocks
 
-### 📉 Risk Metrics
+<!-- ### 📉 Risk Metrics
 - **Sharpe Ratio**: Measure risk-adjusted returns
 - **Portfolio Volatility**: Understand price fluctuation patterns
 - **Maximum Drawdown**: Track worst peak-to-trough decline
-- **Beta Coefficient**: Assess portfolio sensitivity vs. NIFTY
+- **Beta Coefficient**: Assess portfolio sensitivity vs. NIFTY -->
 
 ### 🤖 AI-Powered Insights
 - **RAG Technology**: Access financial knowledge from embedded books (The Intelligent Investor, Corporate Finance guides, etc.)
@@ -314,10 +314,13 @@ Frontend will run on: `http://localhost:3000`
 ### Holdings Page
 ![Holdings Page](./Readme_Images/holdings.png)
 
+### Analytics Page
+![Analytics Page](./Readme_Images/analytics.png)
+
 <!-- ### Analytics Dashboard
 ![Analytics Page](./screenshots/analytics.png) -->
 
-### Performance Comparison
+### AI Insights
 ![AI Chatbot](./Readme_Images/chatbot.png)
 
 ---
@@ -376,6 +379,7 @@ PortfolioInsight/
 │   ├── components/            # React components
 │   │   ├── ui/               # Shadcn UI components
 │   │   ├── dashboard/        # Dashboard-specific components
+│   │   ├── analytics/        # Analytics page components
 │   │   ├── holdings/         # Holdings management components
 │   │   └── landing/          # Landing page sections
 │   │

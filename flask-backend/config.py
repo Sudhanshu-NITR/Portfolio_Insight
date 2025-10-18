@@ -45,6 +45,8 @@ class Config:
     CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1200"))
     CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "150"))
     RETRIEVAL_K = int(os.getenv("RETRIEVAL_K", "6"))  # Number of documents to retrieve
+
+    ENV = os.getenv("ENV", "PROD")
     
     @classmethod
     def validate_config(cls):
