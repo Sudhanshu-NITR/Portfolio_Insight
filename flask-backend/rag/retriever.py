@@ -1,7 +1,6 @@
-from langchain_pinecone.vectorstores import PineconeVectorStore
 from pinecone import Pinecone
+from langchain_community.vectorstores import Pinecone as PineconeVectorStore
 from .llm import make_embedder
-from config import Config
 import os
 
 def get_retriever():

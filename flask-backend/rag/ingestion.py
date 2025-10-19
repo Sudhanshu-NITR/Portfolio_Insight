@@ -1,10 +1,9 @@
 import os, shutil, subprocess
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader, UnstructuredURLLoader, TextLoader
-from .llm import make_embedder
+from langchain_community.vectorstores import Pinecone as PineconeVectorStore
 from pinecone import Pinecone, ServerlessSpec
-from langchain_pinecone.vectorstores import PineconeVectorStore
+from .llm import make_embedder
 from config import Config
 from utils.logging_utils import StepTimer
 
@@ -83,35 +82,71 @@ def load_docs(manifest: list[dict]):
             print(f"[INGEST] skipped item[{i}] type={t}")
     return docs
 
+def _make_ids(batch):
+    ids = []
+    for j, d in enumerate(batch):
+        src = (d.metadata.get("source") or d.metadata.get("file_path") or d.metadata.get("path") or "unknown")
+        src = os.path.basename(str(src))
+        page = d.metadata.get("page", 0)
+        ids.append(f"{src}::p{page}::c{j}")
+    return ids
+
 def ingest(manifest: list[dict]):
     tm = StepTimer("INGEST")
     tm.start(f"start; docs={len(manifest)}")
+
     docs = load_docs(manifest)
     tm.step(f"loaded_docs={len(docs)}")
+
     splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
     tm.step("chunking")
     chunks = splitter.split_documents(docs)
     print(f"[INGEST] total_docs={len(docs)} chunks={len(chunks)}")
     tm.step(f"chunked; chunks={len(chunks)}")
+
     if not chunks:
         return {"chunks_indexed": 0, "warning": "No text extracted. Provide .txt or install pdftotext/ocrmypdf in PATH."}
+
     tm.step("embedding init")
-    embeddings = make_embedder()  # unchanged
+    embeddings = make_embedder()  # LangChain Embeddings object (Gemini/OpenAI/ST)
+    tm.step("embedding ready")
+
+    tm.step("pinecone init")
     pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
     index_name = os.getenv("PINECONE_INDEX_NAME", "advisor-kg")
-    dimension = int(os.getenv("EMBED_DIM", "1536"))  # must match your embedding model
+    dimension = int(os.getenv("EMBED_DIM", "1536"))  # must match your embeddings model
     metric = os.getenv("EMBED_METRIC", "cosine")
-    if not pc.has_index(index_name):
+    region = os.getenv("PINECONE_REGION", "us-east-1")
+
+    # Some SDK versions lack has_index; fall back to list_indexes
+    try:
+        has_idx = pc.has_index(index_name)
+    except Exception:
+        has_idx = index_name in [i["name"] for i in pc.list_indexes().get("indexes", [])]
+
+    if not has_idx:
         pc.create_index(
             name=index_name,
             dimension=dimension,
             metric=metric,
-            spec=ServerlessSpec(cloud="aws", region="us-east-1"),
+            spec=ServerlessSpec(cloud="aws", region=region),
         )
     index = pc.Index(index_name)
     vector_store = PineconeVectorStore(index=index, embedding=embeddings)
 
     BATCH_SIZE = int(os.getenv("EMBED_BATCH_SIZE", "512"))
+    print(f"[INGEST] provider={getattr(Config, 'EMBED_PROVIDER', 'unknown')} index={index_name} dim={dimension} metric={metric} region={region} batch={BATCH_SIZE}")
+
+    total = 0
+    failures = 0
     for i in range(0, len(chunks), BATCH_SIZE):
-        vector_store.add_documents(chunks[i:i+BATCH_SIZE])
-    return {"chunks_indexed": len(chunks)}
+        batch = chunks[i:i+BATCH_SIZE]
+        ids = _make_ids(batch)
+        try:
+            vector_store.add_documents(batch, ids=ids)
+            total += len(batch)
+        except Exception as e:
+            failures += len(batch)
+            print(f"[INGEST] batch {i//BATCH_SIZE} failed ({len(batch)} docs): {e}")
+
+    return {"chunks_indexed": total, "batches": (len(chunks) + BATCH_SIZE - 1)//BATCH_SIZE, "failed": failures, "index": index_name}
