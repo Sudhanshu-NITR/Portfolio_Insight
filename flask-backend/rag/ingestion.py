@@ -3,6 +3,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader, UnstructuredURLLoader, TextLoader
 from .llm import make_embedder
+from pinecone import Pinecone, ServerlessSpec
+from langchain_pinecone import PineconeVectorStore
 from config import Config
 from utils.logging_utils import StepTimer
 
@@ -94,13 +96,22 @@ def ingest(manifest: list[dict]):
     if not chunks:
         return {"chunks_indexed": 0, "warning": "No text extracted. Provide .txt or install pdftotext/ocrmypdf in PATH."}
     tm.step("embedding init")
-    embeddings = make_embedder()
-    tm.step("embedding ready")
-    tm.step("Chroma open/add")
-    db = Chroma(
-        collection_name="advisor_kg",
-        embedding_function=embeddings,
-        persist_directory=Config.VECTOR_DB_DIR  # auto-persistence when this is set
-    )
-    db.add_documents(chunks)
+    embeddings = make_embedder()  # unchanged
+    pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
+    index_name = os.getenv("PINECONE_INDEX_NAME", "advisor-kg")
+    dimension = int(os.getenv("EMBED_DIM", "1536"))  # must match your embedding model
+    metric = os.getenv("EMBED_METRIC", "cosine")
+    if not pc.has_index(index_name):
+        pc.create_index(
+            name=index_name,
+            dimension=dimension,
+            metric=metric,
+            spec=ServerlessSpec(cloud="aws", region="us-east-1"),
+        )
+    index = pc.Index(index_name)
+    vector_store = PineconeVectorStore(index=index, embedding=embeddings)
+
+    BATCH_SIZE = int(os.getenv("EMBED_BATCH_SIZE", "512"))
+    for i in range(0, len(chunks), BATCH_SIZE):
+        vector_store.add_documents(chunks[i:i+BATCH_SIZE])
     return {"chunks_indexed": len(chunks)}

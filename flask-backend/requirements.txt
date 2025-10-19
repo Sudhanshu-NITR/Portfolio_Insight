@@ -48,5 +48,7 @@ pytest-flask
 Pillow
 python-multipart
 
-
 gunicorn
+
+pinecone
+langchain-pinecone

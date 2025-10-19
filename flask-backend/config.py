@@ -47,6 +47,12 @@ class Config:
     RETRIEVAL_K = int(os.getenv("RETRIEVAL_K", "6"))  # Number of documents to retrieve
 
     ENV = os.getenv("ENV", "PROD")
+
+    PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+    PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "advisor-kg")
+    EMBED_DIM = int(os.getenv("EMBED_DIM", "768")) 
+    EMBED_METRIC = os.getenv("EMBED_METRIC", "cosine")
+    EMBED_BATCH_SIZE = int(os.getenv("EMBED_BATCH_SIZE", "512"))
     
     @classmethod
     def validate_config(cls):
