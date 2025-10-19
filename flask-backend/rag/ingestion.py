@@ -4,7 +4,7 @@ from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader, UnstructuredURLLoader, TextLoader
 from .llm import make_embedder
 from pinecone import Pinecone, ServerlessSpec
-from langchain_pinecone import PineconeVectorStore
+from langchain_pinecone.vectorstores import PineconeVectorStore
 from config import Config
 from utils.logging_utils import StepTimer
 

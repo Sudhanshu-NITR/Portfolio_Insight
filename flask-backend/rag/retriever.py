@@ -1,4 +1,4 @@
-from langchain_pinecone import PineconeVectorStore
+from langchain_pinecone.vectorstores import PineconeVectorStore
 from pinecone import Pinecone
 from .llm import make_embedder
 from config import Config
