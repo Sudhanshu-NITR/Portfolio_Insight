@@ -23,7 +23,7 @@ export default function RootLayout({ children }) {
   return (
     <>
       <Head>
-        <link rel="icon" href="/portfolio.png" />
+        <link rel="icon" href="/trendUp.png" />
       </Head>
       <html lang="en" suppressHydrationWarning>
         <head>
